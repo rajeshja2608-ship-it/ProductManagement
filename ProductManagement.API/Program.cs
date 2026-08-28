@@ -24,10 +24,7 @@ namespace ProductManagement.API
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
-
-
-            
+            });            
 
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
@@ -64,11 +61,8 @@ namespace ProductManagement.API
 
             app.UseHttpsRedirection();
             app.UseAuthentication();
-
             app.UseAuthorization();
-
-
-            app.MapControllers();
+            app.MapControllers(); 
 
             app.Run();
         }
