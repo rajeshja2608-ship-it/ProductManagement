@@ -6,7 +6,7 @@ using ProductManagement.API.DTOs;
 using ProductManagement.API.Services;
 
 namespace ProductManagement.API.Controllers
-{
+{ 
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
