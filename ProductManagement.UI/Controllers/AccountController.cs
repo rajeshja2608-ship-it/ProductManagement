@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using ProductManagement.UI.Models;
 
 namespace ProductManagement.UI.Controllers
@@ -7,10 +8,17 @@ namespace ProductManagement.UI.Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public AccountController(IHttpClientFactory httpClientFactory)
+        public AccountController(
+            IHttpClientFactory httpClientFactory)
         {
-            _httpClientFactory = httpClientFactory;
+            _httpClientFactory =
+                httpClientFactory;
         }
+
+
+        // =====================================================
+        // LOGIN GET
+        // =====================================================
 
         [HttpGet]
         public IActionResult Login()
@@ -18,46 +26,142 @@ namespace ProductManagement.UI.Controllers
             return View();
         }
 
+
+        // =====================================================
+        // LOGIN POST
+        // =====================================================
+
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(
+            LoginViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            var client = _httpClientFactory.CreateClient("ProductApi");
 
-            var response = await client.PostAsJsonAsync("api/Auth/login",model);
+            // ================================================
+            // API CLIENT
+            // ================================================
+
+            var client =
+                _httpClientFactory
+                    .CreateClient("ProductApi");
+
+
+            // ================================================
+            // LOGIN REQUEST
+            // ================================================
+
+            var response =
+                await client.PostAsJsonAsync(
+                    "api/Auth/login",
+                    model);
+
+
+            // ================================================
+            // INVALID LOGIN
+            // ================================================
 
             if (!response.IsSuccessStatusCode)
             {
-                ViewBag.Error ="Invalid email or password";
+                ViewBag.Error =
+                    "Invalid email or password.";
+
                 return View(model);
             }
 
-            var loginResponse =await response.Content.ReadFromJsonAsync<LoginResponseViewModel>();
-            if (loginResponse == null)
+
+            // ================================================
+            // READ RESPONSE
+            // ================================================
+
+            var result =
+                await response.Content
+                    .ReadFromJsonAsync<LoginResponse>();
+
+
+            if (result == null ||
+                string.IsNullOrWhiteSpace(result.Token))
             {
-                ViewBag.Error = "Login failed";
+                ViewBag.Error =
+                    "Invalid response from API.";
+
                 return View(model);
             }
 
-            HttpContext.Session.SetString("JwtToken",loginResponse.Token);
 
-            HttpContext.Session.SetString("UserName",loginResponse.Name);
+            // ================================================
+            // STORE JWT
+            // ================================================
 
-            HttpContext.Session.SetString("UserRole",loginResponse.Role);
+            HttpContext.Session.SetString(
+                "JwtToken",
+                result.Token);
 
 
-            return RedirectToAction("Index","Product");
+            // ================================================
+            // STORE USER INFORMATION
+            // ================================================
+
+            if (!string.IsNullOrWhiteSpace(
+                    result.UserName))
+            {
+                HttpContext.Session.SetString(
+                    "UserName",
+                    result.UserName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    result.Role))
+            {
+                HttpContext.Session.SetString(
+                    "UserRole",
+                    result.Role);
+            }
+
+
+            // ================================================
+            // REDIRECT
+            // ================================================
+
+            return RedirectToAction(
+                "Index",
+                "Product");
         }
 
+
+        // =====================================================
+        // LOGOUT
+        // =====================================================
+
+        [HttpGet]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
 
-            return RedirectToAction("Login");
+            return RedirectToAction(
+                "Login",
+                "Account");
         }
+    }
+
+
+    // =========================================================
+    // LOGIN RESPONSE
+    // =========================================================
+
+    public class LoginResponse
+    {
+        public string Token { get; set; } =
+            string.Empty;
+
+        public string UserName { get; set; } =
+            string.Empty;
+
+        public string Role { get; set; } =
+            string.Empty;
     }
 }

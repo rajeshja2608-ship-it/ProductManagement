@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductManagement.API.Data;
@@ -20,6 +21,7 @@ namespace ProductManagement.API.Controllers
             _jwtService = jwtService;
         }
         [HttpPost("login")]
+        [Authorize(Policy = "HmacOnly")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var user = await _context.Users.FirstOrDefaultAsync(x =>x.Email == request.Email && x.Password == request.Password && x.IsActive);

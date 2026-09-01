@@ -20,6 +20,7 @@ namespace ProductManagement.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "JwtAndHmac")]
         public async Task<IActionResult> GetProducts()
         {
             var product = await _context.Products.OrderByDescending(x => x.ProductId).ToListAsync();
@@ -27,6 +28,7 @@ namespace ProductManagement.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = "JwtAndHmac")]
         public async Task<IActionResult> GetProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -38,7 +40,7 @@ namespace ProductManagement.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "JwtAndHmacAdmin")]
         public async Task<IActionResult> CreateProduct(
             [FromBody] ProductDto model)
         {
@@ -65,7 +67,7 @@ namespace ProductManagement.API.Controllers
 
       
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "JwtAndHmacAdmin")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto model)
         {
             var product = await _context.Products.FindAsync(id);

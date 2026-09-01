@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using ProductManagement.API.Authentication;
 using ProductManagement.API.Data;
 using ProductManagement.API.Services;
 
@@ -31,22 +32,173 @@ namespace ProductManagement.API
             var jwtAudience = builder.Configuration["Jwt:Audience"]!;
 
 
-            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+            //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            //{
+            //    options.TokenValidationParameters = new TokenValidationParameters
+            //    {
+            //        ValidateIssuer = true,
+            //        ValidateAudience=true,
+            //        ValidateLifetime=true,
+            //        ValidateIssuerSigningKey=true,
+            //        ValidIssuer= jwtIssuer,
+            //        ValidAudience= jwtAudience,
+            //        IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            //        ClockSkew=TimeSpan.Zero
+            //    };
+            //});
+
+            //builder.Services.AddAuthorization();
+
+            // ==========================================
+            // HMAC NONCE STORE
+            // ==========================================
+
+            builder.Services.AddSingleton<
+                IHmacNonceStore,
+                HmacNonceStore>();
+
+            // ==========================================
+            // AUTHENTICATION
+            // ==========================================
+
+            builder.Services
+                .AddAuthentication(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience=true,
-                    ValidateLifetime=true,
-                    ValidateIssuerSigningKey=true,
-                    ValidIssuer= jwtIssuer,
-                    ValidAudience= jwtAudience,
-                    IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                    ClockSkew=TimeSpan.Zero
-                };
+                    // JWT is default authentication
+                    options.DefaultAuthenticateScheme =
+                        JwtBearerDefaults.AuthenticationScheme;
+
+                    options.DefaultChallengeScheme =
+                        JwtBearerDefaults.AuthenticationScheme;
+                })
+
+
+                // ======================================
+                // JWT
+                // ======================================
+
+                .AddJwtBearer(
+                    JwtBearerDefaults.AuthenticationScheme,
+                    options =>
+                    {
+                        options.TokenValidationParameters =
+                            new TokenValidationParameters
+                            {
+                                ValidateIssuer = true,
+
+                                ValidateAudience = true,
+
+                                ValidateLifetime = true,
+
+                                ValidateIssuerSigningKey = true,
+
+                                ValidIssuer =
+                                    jwtIssuer,
+
+                                ValidAudience =
+                                    jwtAudience,
+
+                                IssuerSigningKey =
+                                    new SymmetricSecurityKey(
+                                        Encoding.UTF8.GetBytes(
+                                            jwtKey)),
+
+                                ClockSkew =
+                                    TimeSpan.Zero
+                            };
+                    })
+
+
+                // ======================================
+                // HMAC
+                // ======================================
+
+                .AddScheme<
+                    HmacAuthenticationOptions,
+                    HmacAuthenticationHandler>(
+                    HmacAuthenticationOptions.DefaultScheme,
+                    options =>
+                    {
+                        options.ExpirySeconds = 300;
+                    });
+
+
+            // ==========================================
+            // AUTHORIZATION
+            // ==========================================
+
+            builder.Services.AddAuthorization(options =>
+            {
+                // --------------------------------------
+                // JWT ONLY
+                // --------------------------------------
+
+                options.AddPolicy(
+                    "JwtOnly",
+                    policy =>
+                    {
+                        policy.AddAuthenticationSchemes(
+                            JwtBearerDefaults
+                                .AuthenticationScheme);
+
+                        policy.RequireAuthenticatedUser();
+                    });
+
+
+                // --------------------------------------
+                // HMAC ONLY
+                // --------------------------------------
+
+                options.AddPolicy(
+                    "HmacOnly",
+                    policy =>
+                    {
+                        policy.AddAuthenticationSchemes(
+                            HmacAuthenticationOptions
+                                .DefaultScheme);
+
+                        policy.RequireAuthenticatedUser();
+                    });
+
+
+                // --------------------------------------
+                // JWT + HMAC
+                // --------------------------------------
+
+                options.AddPolicy(
+                    "JwtAndHmac",
+                    policy =>
+                    {
+                        policy.RequireAuthenticatedUser();
+
+                        policy.AddAuthenticationSchemes(
+                            JwtBearerDefaults
+                                .AuthenticationScheme,
+                            HmacAuthenticationOptions
+                                .DefaultScheme);
+                    });
+
+
+                // --------------------------------------
+                // JWT + HMAC + ADMIN
+                // --------------------------------------
+
+                options.AddPolicy(
+                    "JwtAndHmacAdmin",
+                    policy =>
+                    {
+                        policy.RequireAuthenticatedUser();
+
+                        policy.RequireRole("Admin");
+
+                        policy.AddAuthenticationSchemes(
+                            JwtBearerDefaults
+                                .AuthenticationScheme,
+                            HmacAuthenticationOptions
+                                .DefaultScheme);
+                    });
             });
-           
-            builder.Services.AddAuthorization();
+
 
             builder.Services.AddScoped<JwtService>();
 
