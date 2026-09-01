@@ -200,7 +200,7 @@ namespace ProductManagement.API
             });
 
 
-            builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<JwtService>();//Add JWT Token
 
             var app = builder.Build();
 
