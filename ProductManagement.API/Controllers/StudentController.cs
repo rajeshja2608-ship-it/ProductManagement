@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ProductManagement.API.Data;
 
 namespace ProductManagement.API.Controllers
 {
@@ -7,9 +8,12 @@ namespace ProductManagement.API.Controllers
     [ApiController]
     public class StudentController : ControllerBase
     {
-        public StudentController()
+        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _config;
+        public StudentController(ApplicationDbContext context, IConfiguration config)
         {
-                
+            _context = context;
+            _config = config;
         }
     }
 }
