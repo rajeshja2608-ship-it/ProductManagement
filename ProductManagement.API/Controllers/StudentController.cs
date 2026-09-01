@@ -9,9 +9,11 @@ namespace ProductManagement.API.Controllers
     public class StudentController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        public StudentController(ApplicationDbContext context)
+        private readonly IConfiguration _config;
+        public StudentController(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
+            _config = config;
         }
     }
 }
