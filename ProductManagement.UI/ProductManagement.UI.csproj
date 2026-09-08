@@ -25,8 +25,4 @@
     </PackageReference>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ProductManagement.Tests\ProductManagement.Tests.csproj" />
-  </ItemGroup>
-
 </Project>
