@@ -1,0 +1,94 @@
+name: Product Management CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  pull_request:
+    branches:
+      - main
+      - develop
+
+
+jobs:
+
+  build-and-test:
+
+    name: Build and Unit Test
+
+    runs-on: ubuntu-latest
+
+
+    steps:
+
+      # ============================================
+      # 1. CHECKOUT SOURCE CODE
+      # ============================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+
+      # ============================================
+      # 2. INSTALL .NET 8
+      # ============================================
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+
+      # ============================================
+      # 3. SHOW .NET VERSION
+      # ============================================
+
+      - name: Display .NET version
+        run: dotnet --version
+
+
+      # ============================================
+      # 4. RESTORE NUGET PACKAGES
+      # ============================================
+
+      - name: Restore dependencies
+        run: dotnet restore ProductManagement.sln
+
+
+      # ============================================
+      # 5. BUILD SOLUTION
+      # ============================================
+
+      - name: Build solution
+        run: >
+          dotnet build ProductManagement.sln
+          --configuration Release
+          --no-restore
+
+
+      # ============================================
+      # 6. RUN UNIT TESTS
+      # ============================================
+
+      - name: Run unit tests
+        run: >
+          dotnet test ProductManagement.Tests/ProductManagement.Tests.csproj
+          --configuration Release
+          --no-build
+          --verbosity normal
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+
+
+      # ============================================
+      # 7. UPLOAD TEST RESULTS
+      # ============================================
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: TestResults/
