@@ -26,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ProductManagement.API\ProductManagement.API.csproj" />
     <ProjectReference Include="..\ProductManagement.Tests\ProductManagement.Tests.csproj" />
   </ItemGroup>
 
