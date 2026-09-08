@@ -11,56 +11,33 @@ on:
       - main
       - develop
 
-
 jobs:
+  build-test-publish:
 
-  build-and-test:
-
-    name: Build and Unit Test
+    name: Build, Test and Publish
 
     runs-on: ubuntu-latest
 
-
     steps:
 
-      # ============================================
-      # 1. CHECKOUT SOURCE CODE
-      # ============================================
-
+      # 1. Checkout source code
       - name: Checkout repository
         uses: actions/checkout@v6
 
 
-      # ============================================
-      # 2. INSTALL .NET 8
-      # ============================================
-
+      # 2. Install .NET 8
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
 
-      # ============================================
-      # 3. SHOW .NET VERSION
-      # ============================================
-
-      - name: Display .NET version
-        run: dotnet --version
-
-
-      # ============================================
-      # 4. RESTORE NUGET PACKAGES
-      # ============================================
-
+      # 3. Restore
       - name: Restore dependencies
         run: dotnet restore ProductManagement.sln
 
 
-      # ============================================
-      # 5. BUILD SOLUTION
-      # ============================================
-
+      # 4. Build
       - name: Build solution
         run: >
           dotnet build ProductManagement.sln
@@ -68,10 +45,7 @@ jobs:
           --no-restore
 
 
-      # ============================================
-      # 6. RUN UNIT TESTS
-      # ============================================
-
+      # 5. Run Unit Tests
       - name: Run unit tests
         run: >
           dotnet test ProductManagement.Tests/ProductManagement.Tests.csproj
@@ -82,13 +56,36 @@ jobs:
           --results-directory TestResults
 
 
-      # ============================================
-      # 7. UPLOAD TEST RESULTS
-      # ============================================
+      # 6. Publish API
+      - name: Publish API
+        run: >
+          dotnet publish ProductManagement.API/ProductManagement.API.csproj
+          --configuration Release
+          --output ./publish/API
+          --no-restore
 
+
+      # 7. Publish UI
+      - name: Publish UI
+        run: >
+          dotnet publish ProductManagement.UI/ProductManagement.UI.csproj
+          --configuration Release
+          --output ./publish/UI
+          --no-restore
+
+
+      # 8. Upload Published Application
+      - name: Upload publish files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProductManagement-Publish
+          path: publish/
+
+
+      # 9. Upload Test Results
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: unit-test-results
+          name: Unit-Test-Results
           path: TestResults/
