@@ -17,6 +17,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
+
+      # =========================================================
+      # DOWNLOAD ARTIFACT
+      # =========================================================
+
       - name: Download deployment artifact
         uses: actions/download-artifact@v4
         with:
@@ -25,130 +30,289 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      # =========================================================
+      # CHECK FILES
+      # =========================================================
+
       - name: Check downloaded files
         shell: powershell
         run: |
           Write-Host "Downloaded files:"
           Get-ChildItem -Path ".\publish" -Recurse
 
-      # ---------------------------------------------------------
+      # =========================================================
       # STOP IIS APPLICATION POOLS
-      # ---------------------------------------------------------
+      # =========================================================
 
       - name: Stop IIS Application Pools
         shell: powershell
         run: |
-          Write-Host "Stopping IIS Application Pools..."
 
           Import-Module WebAdministration
 
           $apiPool = "ProductManagement-API"
-          $uiPool = "ProductManagement-UI"
+          $uiPool  = "ProductManagement-UI"
 
+          Write-Host "======================================"
+          Write-Host "Stopping IIS Application Pools"
+          Write-Host "======================================"
+
+          # Stop API
           if (Test-Path "IIS:\AppPools\$apiPool") {
+
               Write-Host "Stopping API App Pool: $apiPool"
-              Stop-WebAppPool -Name $apiPool
-          }
-          else {
-              Write-Host "API App Pool not found: $apiPool"
+
+              Stop-WebAppPool -Name $apiPool -ErrorAction SilentlyContinue
           }
 
+          # Stop UI
           if (Test-Path "IIS:\AppPools\$uiPool") {
+
               Write-Host "Stopping UI App Pool: $uiPool"
-              Stop-WebAppPool -Name $uiPool
-          }
-          else {
-              Write-Host "UI App Pool not found: $uiPool"
+
+              Stop-WebAppPool -Name $uiPool -ErrorAction SilentlyContinue
           }
 
-          Write-Host "Waiting for IIS to release DLL files..."
+          Write-Host "Waiting for IIS processes to stop..."
+
           Start-Sleep -Seconds 5
 
-      # ---------------------------------------------------------
+          Write-Host "Application pools stopped."
+
+      # =========================================================
+      # TAKE API OFFLINE
+      # =========================================================
+
+      - name: Take API Offline
+        shell: powershell
+        run: |
+
+          $apiDestination = "C:\IIS\Product\API"
+
+          if (!(Test-Path $apiDestination)) {
+
+              New-Item `
+                -ItemType Directory `
+                -Path $apiDestination `
+                -Force
+          }
+
+          Write-Host "Creating API app_offline.htm..."
+
+          Set-Content `
+            -Path "$apiDestination\app_offline.htm" `
+            -Value "<html><body>Application is being deployed. Please try again shortly.</body></html>"
+
+          Write-Host "Waiting for API DLL to be released..."
+
+          Start-Sleep -Seconds 5
+
+      # =========================================================
+      # TAKE UI OFFLINE
+      # =========================================================
+
+      - name: Take UI Offline
+        shell: powershell
+        run: |
+
+          $uiDestination = "C:\IIS\Product\UI"
+
+          if (!(Test-Path $uiDestination)) {
+
+              New-Item `
+                -ItemType Directory `
+                -Path $uiDestination `
+                -Force
+          }
+
+          Write-Host "Creating UI app_offline.htm..."
+
+          Set-Content `
+            -Path "$uiDestination\app_offline.htm" `
+            -Value "<html><body>Application is being deployed. Please try again shortly.</body></html>"
+
+          Write-Host "Waiting for UI DLL to be released..."
+
+          Start-Sleep -Seconds 5
+
+      # =========================================================
       # DEPLOY API
-      # ---------------------------------------------------------
+      # =========================================================
 
       - name: Deploy API
         shell: powershell
         run: |
+
+          Write-Host "======================================"
           Write-Host "Deploying API..."
+          Write-Host "======================================"
 
           $source = ".\publish\API"
           $destination = "C:\IIS\Product\API"
 
           if (!(Test-Path $source)) {
+
               throw "API publish folder not found: $source"
           }
 
           if (!(Test-Path $destination)) {
-              New-Item -ItemType Directory -Path $destination -Force
+
+              New-Item `
+                -ItemType Directory `
+                -Path $destination `
+                -Force
           }
 
-          Copy-Item "$source\*" $destination -Recurse -Force
+          Copy-Item `
+            "$source\*" `
+            $destination `
+            -Recurse `
+            -Force
 
           Write-Host "API deployed successfully."
 
-      # ---------------------------------------------------------
+      # =========================================================
       # DEPLOY UI
-      # ---------------------------------------------------------
+      # =========================================================
 
       - name: Deploy UI
         shell: powershell
         run: |
+
+          Write-Host "======================================"
           Write-Host "Deploying UI..."
+          Write-Host "======================================"
 
           $source = ".\publish\UI"
           $destination = "C:\IIS\Product\UI"
 
           if (!(Test-Path $source)) {
+
               throw "UI publish folder not found: $source"
           }
 
           if (!(Test-Path $destination)) {
-              New-Item -ItemType Directory -Path $destination -Force
+
+              New-Item `
+                -ItemType Directory `
+                -Path $destination `
+                -Force
           }
 
-          Copy-Item "$source\*" $destination -Recurse -Force
+          Write-Host "Copying UI files..."
+
+          Copy-Item `
+            "$source\*" `
+            $destination `
+            -Recurse `
+            -Force
 
           Write-Host "UI deployed successfully."
 
-      # ---------------------------------------------------------
+      # =========================================================
+      # REMOVE APP_OFFLINE
+      # =========================================================
+
+      - name: Remove app_offline files
+        shell: powershell
+        run: |
+
+          Write-Host "Removing API app_offline.htm..."
+
+          $apiOffline = "C:\IIS\Product\API\app_offline.htm"
+
+          if (Test-Path $apiOffline) {
+
+              Remove-Item `
+                $apiOffline `
+                -Force
+          }
+
+          Write-Host "Removing UI app_offline.htm..."
+
+          $uiOffline = "C:\IIS\Product\UI\app_offline.htm"
+
+          if (Test-Path $uiOffline) {
+
+              Remove-Item `
+                $uiOffline `
+                -Force
+          }
+
+          Write-Host "Offline files removed."
+
+      # =========================================================
       # START IIS APPLICATION POOLS
-      # ---------------------------------------------------------
+      # =========================================================
 
       - name: Start IIS Application Pools
         shell: powershell
         run: |
-          Write-Host "Starting IIS Application Pools..."
 
           Import-Module WebAdministration
 
           $apiPool = "ProductManagement-API"
-          $uiPool = "ProductManagement-UI"
+          $uiPool  = "ProductManagement-UI"
+
+          Write-Host "======================================"
+          Write-Host "Starting IIS Application Pools"
+          Write-Host "======================================"
 
           if (Test-Path "IIS:\AppPools\$apiPool") {
+
               Write-Host "Starting API App Pool: $apiPool"
+
               Start-WebAppPool -Name $apiPool
           }
 
           if (Test-Path "IIS:\AppPools\$uiPool") {
+
               Write-Host "Starting UI App Pool: $uiPool"
+
               Start-WebAppPool -Name $uiPool
           }
 
-          Write-Host "IIS Application Pools started successfully."
+          Write-Host "IIS Application Pools started."
 
-      # ---------------------------------------------------------
+      # =========================================================
+      # VERIFY APP POOLS
+      # =========================================================
+
+      - name: Verify IIS Application Pools
+        shell: powershell
+        run: |
+
+          Import-Module WebAdministration
+
+          $apiPool = "ProductManagement-API"
+          $uiPool  = "ProductManagement-UI"
+
+          Write-Host "API App Pool State:"
+          Get-WebAppPoolState -Name $apiPool
+
+          Write-Host "UI App Pool State:"
+          Get-WebAppPoolState -Name $uiPool
+
+      # =========================================================
       # VERIFY DEPLOYMENT
-      # ---------------------------------------------------------
+      # =========================================================
 
       - name: Verify deployment
         shell: powershell
         run: |
+
+          Write-Host "======================================"
           Write-Host "Checking API deployment..."
+          Write-Host "======================================"
+
           Get-ChildItem "C:\IIS\Product\API"
 
+          Write-Host "======================================"
           Write-Host "Checking UI deployment..."
+          Write-Host "======================================"
+
           Get-ChildItem "C:\IIS\Product\UI"
 
+          Write-Host "======================================"
           Write-Host "Deployment completed successfully."
+          Write-Host "======================================"
