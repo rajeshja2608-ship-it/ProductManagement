@@ -7,6 +7,10 @@ on:
     types:
       - completed
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
 
   deploy:
@@ -24,46 +28,29 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
+      - name: Check downloaded files
+        shell: powershell
+        run: |
+          Write-Host "Downloaded files:"
+          Get-ChildItem -Path "./publish" -Recurse
+
       - name: Deploy API
         shell: powershell
         run: |
           Write-Host "Deploying API..."
 
-          # Stop API IIS site
-          # Stop-WebAppPool -Name "ProductManagementAPI"
-          # Stop-Website -Name "ProductManagementAPI"
-
-          Remove-Item "C:\IIS\Products\API\*" -Recurse -Force
-
-          Copy-Item "./publish/API/*" "C:\IIS\Products\API\" -Recurse -Force
-
-          # Start API IIS site
-          # Start-Website -Name "ProductManagementAPI"
-          # Start-WebAppPool -Name "ProductManagementAPI"
+          # We will configure IIS here after confirming
+          # artifact download is working.
 
       - name: Deploy UI
         shell: powershell
         run: |
           Write-Host "Deploying UI..."
 
-          # Stop UI IIS site
-          # Stop-WebAppPool -Name "ProductManagementUI"
-          # Stop-Website -Name "ProductManagementUI"
-
-          Remove-Item "C:\IIS\Products\UI\*" -Recurse -Force
-
-          Copy-Item "./publish/UI/*" "C:\IIS\Products\UI\" -Recurse -Force
-
-          # Start UI IIS site
-          # Start-WebAppPool -Name "ProductManagementUI"
-          # Start-Website -Name "ProductManagementUI"
+          # We will configure IIS here after confirming
+          # artifact download is working.
 
       - name: Verify deployment
         shell: powershell
         run: |
-          Write-Host "Deployment completed successfully."
-          Write-Host "API and UI files deployed."
-		  
-		  
-		  
-		  
+          Write-Host "Deployment workflow completed."
