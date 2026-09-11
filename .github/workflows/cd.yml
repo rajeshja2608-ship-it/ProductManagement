@@ -31,6 +31,43 @@ jobs:
           Write-Host "Downloaded files:"
           Get-ChildItem -Path ".\publish" -Recurse
 
+      # ---------------------------------------------------------
+      # STOP IIS APPLICATION POOLS
+      # ---------------------------------------------------------
+
+      - name: Stop IIS Application Pools
+        shell: powershell
+        run: |
+          Write-Host "Stopping IIS Application Pools..."
+
+          Import-Module WebAdministration
+
+          $apiPool = "ProductManagement-API"
+          $uiPool = "ProductManagement-UI"
+
+          if (Test-Path "IIS:\AppPools\$apiPool") {
+              Write-Host "Stopping API App Pool: $apiPool"
+              Stop-WebAppPool -Name $apiPool
+          }
+          else {
+              Write-Host "API App Pool not found: $apiPool"
+          }
+
+          if (Test-Path "IIS:\AppPools\$uiPool") {
+              Write-Host "Stopping UI App Pool: $uiPool"
+              Stop-WebAppPool -Name $uiPool
+          }
+          else {
+              Write-Host "UI App Pool not found: $uiPool"
+          }
+
+          Write-Host "Waiting for IIS to release DLL files..."
+          Start-Sleep -Seconds 5
+
+      # ---------------------------------------------------------
+      # DEPLOY API
+      # ---------------------------------------------------------
+
       - name: Deploy API
         shell: powershell
         run: |
@@ -51,6 +88,10 @@ jobs:
 
           Write-Host "API deployed successfully."
 
+      # ---------------------------------------------------------
+      # DEPLOY UI
+      # ---------------------------------------------------------
+
       - name: Deploy UI
         shell: powershell
         run: |
@@ -70,6 +111,36 @@ jobs:
           Copy-Item "$source\*" $destination -Recurse -Force
 
           Write-Host "UI deployed successfully."
+
+      # ---------------------------------------------------------
+      # START IIS APPLICATION POOLS
+      # ---------------------------------------------------------
+
+      - name: Start IIS Application Pools
+        shell: powershell
+        run: |
+          Write-Host "Starting IIS Application Pools..."
+
+          Import-Module WebAdministration
+
+          $apiPool = "ProductManagement-API"
+          $uiPool = "ProductManagement-UI"
+
+          if (Test-Path "IIS:\AppPools\$apiPool") {
+              Write-Host "Starting API App Pool: $apiPool"
+              Start-WebAppPool -Name $apiPool
+          }
+
+          if (Test-Path "IIS:\AppPools\$uiPool") {
+              Write-Host "Starting UI App Pool: $uiPool"
+              Start-WebAppPool -Name $uiPool
+          }
+
+          Write-Host "IIS Application Pools started successfully."
+
+      # ---------------------------------------------------------
+      # VERIFY DEPLOYMENT
+      # ---------------------------------------------------------
 
       - name: Verify deployment
         shell: powershell
