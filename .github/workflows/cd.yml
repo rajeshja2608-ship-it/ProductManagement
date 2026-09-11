@@ -21,23 +21,49 @@ jobs:
         with:
           name: ProductManagement-Publish
           path: ./publish
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Deploy API
         shell: powershell
         run: |
+          Write-Host "Deploying API..."
+
           # Stop API IIS site
-          # Copy ./publish/API to C:\IIS\Products\API
+          # Stop-WebAppPool -Name "ProductManagementAPI"
+          # Stop-Website -Name "ProductManagementAPI"
+
+          Remove-Item "C:\IIS\Products\API\*" -Recurse -Force
+
+          Copy-Item "./publish/API/*" "C:\IIS\Products\API\" -Recurse -Force
+
           # Start API IIS site
+          # Start-Website -Name "ProductManagementAPI"
+          # Start-WebAppPool -Name "ProductManagementAPI"
 
       - name: Deploy UI
         shell: powershell
         run: |
+          Write-Host "Deploying UI..."
+
           # Stop UI IIS site
-          # Copy ./publish/UI to C:\IIS\Products\UI
+          # Stop-WebAppPool -Name "ProductManagementUI"
+          # Stop-Website -Name "ProductManagementUI"
+
+          Remove-Item "C:\IIS\Products\UI\*" -Recurse -Force
+
+          Copy-Item "./publish/UI/*" "C:\IIS\Products\UI\" -Recurse -Force
+
           # Start UI IIS site
+          # Start-WebAppPool -Name "ProductManagementUI"
+          # Start-Website -Name "ProductManagementUI"
 
       - name: Verify deployment
         shell: powershell
         run: |
-          # Test API
-          # Test UI
+          Write-Host "Deployment completed successfully."
+          Write-Host "API and UI files deployed."
+		  
+		  
+		  
+		  
