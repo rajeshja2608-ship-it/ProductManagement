@@ -1,85 +1,83 @@
 name: Product Management CD
 
 on:
-workflow_run:
-workflows:
-- Product Management CI
-types:
-- completed
+  workflow_run:
+    workflows:
+      - Product Management CI
+    types:
+      - completed
 
 permissions:
-actions: read
-contents: read
+  actions: read
+  contents: read
 
 jobs:
-deploy:
-if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
-runs-on: self-hosted
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
 
-```
-steps:
-  - name: Download deployment artifact
-    uses: actions/download-artifact@v4
-    with:
-      name: ProductManagement-Publish
-      path: ./publish
-      github-token: ${{ secrets.GITHUB_TOKEN }}
-      run-id: ${{ github.event.workflow_run.id }}
+    steps:
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ProductManagement-Publish
+          path: ./publish
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
-  - name: Check downloaded files
-    shell: powershell
-    run: |
-      Write-Host "Downloaded files:"
-      Get-ChildItem -Path ".\publish" -Recurse
+      - name: Check downloaded files
+        shell: powershell
+        run: |
+          Write-Host "Downloaded files:"
+          Get-ChildItem -Path ".\publish" -Recurse
 
-  - name: Deploy API
-    shell: powershell
-    run: |
-      Write-Host "Deploying API..."
+      - name: Deploy API
+        shell: powershell
+        run: |
+          Write-Host "Deploying API..."
 
-      $source = ".\publish\API"
-      $destination = "C:\IIS\Product\API"
+          $source = ".\publish\API"
+          $destination = "C:\IIS\Product\API"
 
-      if (!(Test-Path $source)) {
-          throw "API publish folder not found: $source"
-      }
+          if (!(Test-Path $source)) {
+              throw "API publish folder not found: $source"
+          }
 
-      if (!(Test-Path $destination)) {
-          New-Item -ItemType Directory -Path $destination -Force
-      }
+          if (!(Test-Path $destination)) {
+              New-Item -ItemType Directory -Path $destination -Force
+          }
 
-      Copy-Item "$source\*" $destination -Recurse -Force
+          Copy-Item "$source\*" $destination -Recurse -Force
 
-      Write-Host "API deployed successfully to $destination"
+          Write-Host "API deployed successfully."
 
-  - name: Deploy UI
-    shell: powershell
-    run: |
-      Write-Host "Deploying UI..."
+      - name: Deploy UI
+        shell: powershell
+        run: |
+          Write-Host "Deploying UI..."
 
-      $source = ".\publish\UI"
-      $destination = "C:\IIS\Product\UI"
+          $source = ".\publish\UI"
+          $destination = "C:\IIS\Product\UI"
 
-      if (!(Test-Path $source)) {
-          throw "UI publish folder not found: $source"
-      }
+          if (!(Test-Path $source)) {
+              throw "UI publish folder not found: $source"
+          }
 
-      if (!(Test-Path $destination)) {
-          New-Item -ItemType Directory -Path $destination -Force
-      }
+          if (!(Test-Path $destination)) {
+              New-Item -ItemType Directory -Path $destination -Force
+          }
 
-      Copy-Item "$source\*" $destination -Recurse -Force
+          Copy-Item "$source\*" $destination -Recurse -Force
 
-      Write-Host "UI deployed successfully to $destination"
+          Write-Host "UI deployed successfully."
 
-  - name: Verify deployment
-    shell: powershell
-    run: |
-      Write-Host "Checking API deployment..."
-      Get-ChildItem "C:\IIS\Product\API"
+      - name: Verify deployment
+        shell: powershell
+        run: |
+          Write-Host "Checking API deployment..."
+          Get-ChildItem "C:\IIS\Product\API"
 
-      Write-Host "Checking UI deployment..."
-      Get-ChildItem "C:\IIS\Product\UI"
+          Write-Host "Checking UI deployment..."
+          Get-ChildItem "C:\IIS\Product\UI"
 
-      Write-Host "Deployment completed successfully."
-```
+          Write-Host "Deployment completed successfully."
