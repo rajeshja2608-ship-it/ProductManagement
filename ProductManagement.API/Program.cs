@@ -25,7 +25,22 @@ namespace ProductManagement.API
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });            
+            });
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("DataLensPolicy", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:5500",
+                            "http://127.0.0.1:5500"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+            });
 
             var jwtKey = builder.Configuration["Jwt:Key"]!;
             var jwtIssuer = builder.Configuration["Jwt:Issuer"]!;
@@ -212,6 +227,8 @@ namespace ProductManagement.API
             }
 
             app.UseHttpsRedirection();
+            app.UseCors("DataLensPolicy");
+
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers(); 
