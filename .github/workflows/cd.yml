@@ -50,8 +50,8 @@ jobs:
 
           Import-Module WebAdministration
 
-          $apiPool = "ProductManagement-API"
-          $uiPool  = "ProductManagement-UI"
+          $apiPool = "ProductManagement.API"
+          $uiPool  = "ProductManagement.UI"
 
           Write-Host "======================================"
           Write-Host "Stopping IIS Application Pools"
@@ -251,8 +251,8 @@ jobs:
 
           Import-Module WebAdministration
 
-          $apiPool = "ProductManagement-API"
-          $uiPool  = "ProductManagement-UI"
+          $apiPool = "ProductManagement.API"
+          $uiPool  = "ProductManagement.UI"
 
           Write-Host "======================================"
           Write-Host "Starting IIS Application Pools"
@@ -284,8 +284,8 @@ jobs:
 
           Import-Module WebAdministration
 
-          $apiPool = "ProductManagement-API"
-          $uiPool  = "ProductManagement-UI"
+          $apiPool = "ProductManagement.API"
+          $uiPool  = "ProductManagement.UI"
 
           Write-Host "API App Pool State:"
           Get-WebAppPoolState -Name $apiPool
