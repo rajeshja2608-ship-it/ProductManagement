@@ -13,34 +13,46 @@ namespace ProductManagement.API.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public ProductsController(ApplicationDbContext context)
+        private readonly ILogger<ProductsController> _logger;
+        public ProductsController(ApplicationDbContext context, ILogger<ProductsController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]
-        [Authorize(Policy = "JwtAndHmac")]
+        //  [Authorize(Policy = "JwtAndHmac")]
         public async Task<IActionResult> GetProducts()
         {
-            var product = await _context.Products.OrderByDescending(x => x.ProductId).ToListAsync();
-            return Ok(product);
+            try
+            {
+                _logger.LogInformation("HTTP GET request received for fetching all products.");
+                var product = await _context.Products.OrderByDescending(x => x.ProductId).ToListAsync();
+                _logger.LogInformation("Response: {@Products}", product);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,"Error occured while processing GET all Product Request.");
+                return StatusCode(500, "An Error Occured While fetching products");
+            }
+
         }
 
         [HttpGet("{id}")]
-        [Authorize(Policy = "JwtAndHmac")]
+        //   [Authorize(Policy = "JwtAndHmac")]
         public async Task<IActionResult> GetProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product==null)
+            if (product == null)
             {
-                return NotFound(new {Message="Product Not Found"});
+                return NotFound(new { Message = "Product Not Found" });
             }
             return Ok(product);
         }
 
         [HttpPost]
-        [Authorize(Policy = "JwtAndHmacAdmin")]
+        //   [Authorize(Policy = "JwtAndHmacAdmin")]
         public async Task<IActionResult> CreateProduct(
             [FromBody] ProductDto model)
         {
@@ -65,15 +77,15 @@ namespace ProductManagement.API.Controllers
             });
         }
 
-      
+
         [HttpPut("{id}")]
-        [Authorize(Policy = "JwtAndHmacAdmin")]
+        //   [Authorize(Policy = "JwtAndHmacAdmin")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductDto model)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
-                return NotFound(new {Message = "Product not found"});
+                return NotFound(new { Message = "Product not found" });
             }
 
             product.Name = model.Name;
@@ -88,20 +100,20 @@ namespace ProductManagement.API.Controllers
             return Ok(new { Message = "Product updated successfully" });
         }
 
-   
+
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        //  [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
 
             if (product == null)
             {
-                return NotFound(new {Message = "Product not found"});
+                return NotFound(new { Message = "Product not found" });
             }
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
-            return Ok(new {Message = "Product deleted successfully"});
+            return Ok(new { Message = "Product deleted successfully" });
         }
     }
 }
