@@ -32,7 +32,55 @@ a {
     display: flex;
     min-height: 100vh;
 }
+/* Center the login page content */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f6f7fb;
+}
 
+.login-container {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.login-card {
+    width: 100%;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+    padding: 32px 28px 24px 28px;
+    margin-bottom: 18px;
+}
+
+.login-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 38px;
+    color: #4f46e5;
+    margin-bottom: 18px;
+}
+
+.login-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.login-subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 18px;
+}
 
 /* =========================================================
    SIDEBAR
@@ -251,8 +299,13 @@ a {
 .content-area {
     padding: 28px 30px;
     max-width: 1600px;
+    margin: 0 auto; /* Add this line */
 }
-
+/* Responsive table wrapper */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
 
 /* =========================================================
    PAGE HEADER
